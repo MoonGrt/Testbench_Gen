@@ -10,21 +10,21 @@
 <!-- PROJECT LOGO -->
 <br />
 <div align="center">
-	<a href="https://github.com/MoonGrt/TB_Gen">
+	<a href="https://github.com/MoonGrt/Testbench_Gen">
 	<img src="images/logo.png" alt="Logo" width="80" height="80">
 	</a>
-<h3 align="center">TB_Gen</h3>
+<h3 align="center">Testbench_Gen</h3>
 	<p align="center">
 	The Verilog Testbench Generator, built using PyQt, streamlines Verilog testbench creation by automating module parsing, testbench generation, and simulation integration. Its intuitive interface, customizable templates, and export capabilities enhance productivity and accuracy in digital design workflows, facilitating efficient design verification and validation processes.
 	<br />
-	<a href="https://github.com/MoonGrt/TB_Gen"><strong>Explore the docs »</strong></a>
+	<a href="https://github.com/MoonGrt/Testbench_Gen"><strong>Explore the docs »</strong></a>
 	<br />
 	<br />
-	<a href="https://github.com/MoonGrt/TB_Gen">View Demo</a>
+	<a href="https://github.com/MoonGrt/Testbench_Gen">View Demo</a>
 	·
-	<a href="https://github.com/MoonGrt/TB_Gen/issues">Report Bug</a>
+	<a href="https://github.com/MoonGrt/Testbench_Gen/issues">Report Bug</a>
 	·
-	<a href="https://github.com/MoonGrt/TB_Gen/issues">Request Feature</a>
+	<a href="https://github.com/MoonGrt/Testbench_Gen/issues">Request Feature</a>
 	</p>
 </div>
 
@@ -49,11 +49,13 @@
 └─ Project
   ├─ LICENSE
   ├─ README.md
-  ├─ TB_Gen.py
-  ├─ TB_Gen_GUI.py
   ├─ test.py
   ├─ test.v
-  ├─ verilog.png
+  ├─ test1.py
+  ├─ test2.py
+  ├─ Testbench_Gen.py
+  ├─ Testbench_Gen_GUI.py
+  ├─ vTbgenerator.py
   └─ /images/
 
 ```
@@ -100,14 +102,14 @@ Project Link: [MoonGrt/](https://github.com/MoonGrt/)
 
 <!-- MARKDOWN LINKS & IMAGES -->
 <!-- https://www.markdownguide.org/basic-syntax/#reference-style-links -->
-[contributors-shield]: https://img.shields.io/github/contributors/MoonGrt/TB_Gen.svg?style=for-the-badge
-[contributors-url]: https://github.com/MoonGrt/TB_Gen/graphs/contributors
-[forks-shield]: https://img.shields.io/github/forks/MoonGrt/TB_Gen.svg?style=for-the-badge
-[forks-url]: https://github.com/MoonGrt/TB_Gen/network/members
-[stars-shield]: https://img.shields.io/github/stars/MoonGrt/TB_Gen.svg?style=for-the-badge
-[stars-url]: https://github.com/MoonGrt/TB_Gen/stargazers
-[issues-shield]: https://img.shields.io/github/issues/MoonGrt/TB_Gen.svg?style=for-the-badge
-[issues-url]: https://github.com/MoonGrt/TB_Gen/issues
-[license-shield]: https://img.shields.io/github/license/MoonGrt/TB_Gen.svg?style=for-the-badge
-[license-url]: https://github.com/MoonGrt/TB_Gen/blob/master/LICENSE
+[contributors-shield]: https://img.shields.io/github/contributors/MoonGrt/Testbench_Gen.svg?style=for-the-badge
+[contributors-url]: https://github.com/MoonGrt/Testbench_Gen/graphs/contributors
+[forks-shield]: https://img.shields.io/github/forks/MoonGrt/Testbench_Gen.svg?style=for-the-badge
+[forks-url]: https://github.com/MoonGrt/Testbench_Gen/network/members
+[stars-shield]: https://img.shields.io/github/stars/MoonGrt/Testbench_Gen.svg?style=for-the-badge
+[stars-url]: https://github.com/MoonGrt/Testbench_Gen/stargazers
+[issues-shield]: https://img.shields.io/github/issues/MoonGrt/Testbench_Gen.svg?style=for-the-badge
+[issues-url]: https://github.com/MoonGrt/Testbench_Gen/issues
+[license-shield]: https://img.shields.io/github/license/MoonGrt/Testbench_Gen.svg?style=for-the-badge
+[license-url]: https://github.com/MoonGrt/Testbench_Gen/blob/master/LICENSE
 
