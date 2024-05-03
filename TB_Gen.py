@@ -26,13 +26,13 @@ def findName(inText):
     mo_Name = p.group(0).strip()
     return mo_Name
 
-def paraDeclare(inText ,portArr):
+def paraDeclare(inText, portArr):
     """ find parameter declare """
     pat = r'\s'+ portArr + r'\s[\w\W]*?[;,)]'
     ParaList = re.findall(pat, inText)
     return ParaList
 
-def portDeclare(inText ,portArr):
+def portDeclare(inText, portArr):
     """find port declare, Syntax:
        input [ net_type ] [ signed ] [ range ] list_of_port_identifiers
 

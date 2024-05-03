@@ -1,13 +1,13 @@
 import sys, re
 from PyQt5.QtWidgets import QApplication, QWidget, QLabel, QLineEdit, QPushButton, QVBoxLayout, QHBoxLayout, QFileDialog, QTextEdit
-from PyQt5.QtGui import QIcon  # 导入 QIcon
+from PyQt5.QtGui import QIcon
 
 class TestbenchGenerator(QWidget):
     def __init__(self):
         super().__init__()
         self.setWindowTitle('Verilog Testbench Generator')
         self.resize(800, 600)
-        self.setWindowIcon(QIcon('verilog.png'))
+        self.setWindowIcon(QIcon('images/verilog.png'))
 
         self.module_label = QLabel('Verilog Module:')
         self.module_input = QLineEdit()
