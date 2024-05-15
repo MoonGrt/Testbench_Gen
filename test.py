@@ -1,5 +1,5 @@
 import sys, re, chardet
-from PyQt5.QtWidgets import QApplication, QWidget, QLabel, QLineEdit, QPushButton, QVBoxLayout, QHBoxLayout, QFileDialog, QTextEdit, QGroupBox, QRadioButton
+from PyQt5.QtWidgets import QApplication, QWidget, QLabel, QLineEdit, QPushButton, QVBoxLayout, QHBoxLayout, QFileDialog, QTextEdit, QGroupBox, QRadioButton, QCheckBox
 from PyQt5.QtGui import QIcon
 
 class TestbenchGenerator(QWidget):
@@ -8,26 +8,40 @@ class TestbenchGenerator(QWidget):
         self.setWindowTitle('Verilog Testbench Generator')
         self.resize(900, 700)
         self.setWindowIcon(QIcon('images/verilog.png'))
+        
+        self.fileenstate = 0
+        self.realtimestate = 0
         self.modestate = 1
         self.alignstate = 3
         self.operatestate = 2
         self.tb_content = ''
 
 
+        # component
         self.module_label = QLabel('Verilog Module:')
         self.module_input = QLineEdit()
+        self.module_input.setEnabled(False)
         self.browse_button = QPushButton('Browse')
         self.browse_button.setFixedWidth(80)
         self.browse_button.clicked.connect(self.browse_file)
-        self.copy_button = QPushButton('Copy')
-        self.copy_button.setFixedWidth(80)
-        self.copy_button.clicked.connect(self.copy_to_clipboard)
-        self.pattern_text = QTextEdit()
-        self.pattern_text.setReadOnly(True)
+        self.browse_button.setEnabled(False)
+        self.file_en = QCheckBox('EN')
+        self.file_en.stateChanged.connect(self.file_en_state)
+        self.input_text = QTextEdit()
+        self.input_text.textChanged.connect(self.inputtext_change)
         self.output_textedit = QTextEdit()
+        self.gen_button = QPushButton('Gen')
+        self.gen_button.setFixedWidth(80)
+        self.gen_button.clicked.connect(self.Gen)
+        self.realtime = QCheckBox('RT')
+        self.realtime.stateChanged.connect(self.realtime_state)
         self.result_label = QLabel('')
+        self.copy_button = QPushButton('Copy')
+        self.copy_button.setFixedWidth(135)
+        self.copy_button.clicked.connect(self.copy_to_clipboard)
 
-        self.mode_option = QGroupBox("mode")
+
+        self.mode_option = QGroupBox("")
         self.mode_option1 = QRadioButton('TestBench')
         self.mode_option2 = QRadioButton('Instance')
         self.mode_option1.setChecked(True)
@@ -70,24 +84,30 @@ class TestbenchGenerator(QWidget):
         layoutH1.addWidget(self.module_label)
         layoutH1.addWidget(self.module_input)
         layoutH1.addWidget(self.browse_button)
-        layoutH1.addWidget(self.copy_button)
+        layoutH1.addWidget(self.file_en)
 
         layoutV2 = QVBoxLayout()
         layoutV2.addWidget(self.mode_option)
         layoutV2.addWidget(self.align_option)
         layoutV2.addWidget(self.operate_option)
-        layoutV2.addWidget(self.pattern_text)
+        layoutV2.addWidget(self.input_text)
 
         layoutH2 = QHBoxLayout()
         layoutH2.addLayout(layoutV2)
         layoutH2.addWidget(self.output_textedit)
-        layoutH2.setStretch(0, 3)
-        layoutH2.setStretch(1, 7)
+        layoutH2.setStretch(0, 4)
+        layoutH2.setStretch(1, 6)
+
+        layoutH3 = QHBoxLayout()
+        layoutH3.addWidget(self.gen_button)
+        layoutH3.addWidget(self.realtime)
+        layoutH3.addWidget(self.result_label)
+        layoutH3.addWidget(self.copy_button)
 
         layoutV1 = QVBoxLayout()
         layoutV1.addLayout(layoutH1)
         layoutV1.addLayout(layoutH2)
-        layoutV1.addWidget(self.result_label)
+        layoutV1.addLayout(layoutH3)
 
         self.setLayout(layoutV1)
 
@@ -99,13 +119,29 @@ class TestbenchGenerator(QWidget):
         if file_dialog.exec_():
             file_path = file_dialog.selectedFiles()[0]
             self.module_input.setText(file_path)
-        
+
         self.Gen()
 
     def copy_to_clipboard(self):
         clipboard = QApplication.clipboard()
         clipboard.setText(self.output_textedit.toPlainText())
         self.result_label.setText(f"Content copied to clipboard.")
+
+    def file_en_state(self):
+        if self.file_en.isChecked():
+            self.browse_button.setEnabled(True)
+            self.module_input.setEnabled(True)
+            self.fileenstate = 1
+        else:
+            self.browse_button.setEnabled(False)
+            self.module_input.setEnabled(False)
+            self.fileenstate = 0
+
+    def realtime_state(self):
+        if self.realtime.isChecked():
+            self.realtimestate = 1
+        else:
+            self.realtimestate = 0
 
     def mode_state(self):
         if self.mode_option1.isChecked():
@@ -131,6 +167,10 @@ class TestbenchGenerator(QWidget):
         else:
             self.operatestate = 2
         self.Gen()
+
+    def inputtext_change(self):
+        if self.realtimestate:
+            self.Gen()
 
 
 
@@ -257,6 +297,8 @@ class TestbenchGenerator(QWidget):
     def formatPara(self, ParaList):
         paraDec = ''
         paraDef = ''
+        l1 = 0
+        l2 = 0
         if ParaList != []:
             s = '\n'.join(ParaList)
             pat = r'([a-zA-Z_][a-zA-Z_0-9]*)\s*=\s*([\w\W]*?)\s*[;,)]'
@@ -280,99 +322,71 @@ class TestbenchGenerator(QWidget):
             elif self.alignstate == 3:
                 paraDef = '#(\n' + ',\n'.join( ['    .'+ i[0].ljust(l1 + 1)
                             + '( ' + i[0].ljust(l1) + ' )' for i in p]) + ')\n'
-        else:
-            l1 = 6
-            l2 = 2
 
-        if self.alignstate == 1:
-            preDec = '\n'.join(['parameter %s = %s;\n' % ('T', '10')])
-        elif self.alignstate == 2:
-            preDec = '\n'.join(['parameter %s = %s;\n' % ('T'.ljust(l1+1), '10')])
-        elif self.alignstate == 3:
-            preDec = '\n'.join(['parameter %s = %s;\n' % ('T'.ljust(l1+1), '10'.ljust(l2))])
+        if self.modestate == 1:
+            if self.alignstate == 1:
+                preDec = '\n'.join(['parameter %s = %s;\n' % ('T', '10')])
+            elif self.alignstate == 2:
+                preDec = '\n'.join(['parameter %s = %s;\n' % ('T'.ljust(l1+1), '10')])
+            elif self.alignstate == 3:
+                preDec = '\n'.join(['parameter %s = %s;\n' % ('T'.ljust(l1+1), '10'.ljust(l2))])
+        elif self.modestate == 2:
+            preDec = ''
+
         paraDec = preDec + paraDec
         return paraDec, paraDef
 
 
     def Gen(self):
-        input_file = self.module_input.text()
-        if not input_file:
-            return
-        with open(input_file, 'rb') as f:
-            f_info = chardet.detect(f.read())
-            f_encoding = f_info['encoding']
-        with open(input_file, encoding=f_encoding) as inFile:
-            inText = inFile.read()
+        if self.fileenstate:
+            input_file = self.module_input.text()
+            if not input_file:
+                return
+            with open(input_file, 'rb') as f:
+                f_info = chardet.detect(f.read())
+                f_encoding = f_info['encoding']
+            with open(input_file, encoding=f_encoding) as inFile:
+                inText = inFile.read()
+        else:
+            inText = self.input_text.toPlainText()
 
-        # removed comment, task, function
-        inText = self.delComment(inText)
-        inText = self.delBlock(inText)
+        try:
+            # removed comment, task, function
+            inText = self.delComment(inText)
+            inText = self.delBlock(inText)
 
-        # moduel ... endmodule #
-        moPos_begin = re.search(r'(\b|^)module\b', inText).end()
-        moPos_end = re.search(r'\bendmodule\b', inText).start()
-        inText = inText[moPos_begin: moPos_end]
+            # moduel ... endmodule #
+            moPos_begin = re.search(r'(\b|^)module\b', inText).end()
+            moPos_end = re.search(r'\bendmodule\b', inText).start()
+            inText = inText[moPos_begin: moPos_end]
 
-        self.name = self.findName(inText)
-        paraList = self.paraDeclare(inText, 'parameter')
-        self.paraDec, self.paraDef = self.formatPara(paraList)
+            self.name = self.findName(inText)
+            paraList = self.paraDeclare(inText, 'parameter')
+            self.paraDec, self.paraDef = self.formatPara(paraList)
 
-        ioPadAttr = ['input', 'output', 'inout']
-        self.input  = self.portDeclare(inText, ioPadAttr[0])
-        self.output = self.portDeclare(inText, ioPadAttr[1])
-        self.inout  = self.portDeclare(inText, ioPadAttr[2])
+            ioPadAttr = ['input', 'output', 'inout']
+            self.input  = self.portDeclare(inText, ioPadAttr[0])
+            self.output = self.portDeclare(inText, ioPadAttr[1])
+            self.inout  = self.portDeclare(inText, ioPadAttr[2])
 
-        self.portList = self.formatPort([self.input, self.output, self.inout])
-        self.input  = self.formatDeclare(self.input, 'reg', '0')
-        self.output = self.formatDeclare(self.output, 'wire')
-        self.inout  = self.formatDeclare(self.inout, 'wire')
+            self.portList = self.formatPort([self.input, self.output, self.inout])
+            self.input  = self.formatDeclare(self.input, 'reg', '0')
+            self.output = self.formatDeclare(self.output, 'wire')
+            self.inout  = self.formatDeclare(self.inout, 'wire')
 
-        if self.modestate == 1:
-            self.Testbench_Gen()
-        elif self.modestate == 2:
-            self.Instance_Gen()
+            self.GEN()
+        except:
+            self.result_label.setText(f"Error!")
 
     """ generate testbench """
-    def Testbench_Gen(self):
+    def GEN(self):
         # write testbench
-        self.tb_content += '`timescale 1ns / 1ps\n'
-        self.tb_content += "module tb_%s;\n" % self.name
+        if self.modestate == 1:
+            self.tb_content += '`timescale 1ns / 1ps\n'
+            self.tb_content += "module tb_%s;\n\n" % self.name
 
         # module_parameter_port_list
-        if(self.paraDec!=''):
-            self.tb_content += "\n// %s Parameters\n%s\n" % (self.name, self.paraDec)
-
-        # list_of_port_declarations
-        if(self.input != ''):
-            self.tb_content += "\n// %s Inputs\n%s\n" % (self.name, self.input)
-        if(self.output != ''):
-            self.tb_content += "\n// %s Outputs\n%s\n" % (self.name, self.output)
-        if(self.inout != ''):
-            self.tb_content += "\n// %s Inouts\n%s\n" % (self.name, self.inout)
-
-        # print clock
-        clk = '''\ninit\nbegin\n    forever #(T/2) clk = ~clk;\nend\n'''
-        rst = '''\ninit\nbegin\n    #(T*2) rst_n = 1;\nend\n'''
-        self.tb_content += "%s%s" % (clk,rst)
-
-        # print operation
-        if self.operatestate == 1:
-            self.tb_content += '''\ninit\nbegin\n\n    $finish;\nend\n'''
-
-        # UUT
-        self.tb_content += "\n%s %su_%s (\n%s\n);\n" % (self.name, self.paraDef, self.name, self.portList)
-
-        # endmodule
-        self.tb_content += "\nendmodule"
-
-        self.output_textedit.setPlainText(self.tb_content)
-        self.tb_content = ''
-
-    """ generate instance """
-    def Instance_Gen(self):
-        # write Instance
-        # module_parameter_port_list
-        if(self.paraDec!=''):
+        if(self.paraDec != ''):
             self.tb_content += "// %s Parameters\n%s\n" % (self.name, self.paraDec)
 
         # list_of_port_declarations
@@ -383,10 +397,25 @@ class TestbenchGenerator(QWidget):
         if(self.inout != ''):
             self.tb_content += "\n// %s Inouts\n%s\n" % (self.name, self.inout)
 
+        # print clock
+        if self.modestate == 1:
+            clk = '''\ninit begin\n    forever #(T/2) clk = ~clk;\nend\n'''
+            rst = '''\ninit begin\n    #(T*2) rst_n = 1;\nend\n'''
+            self.tb_content += "%s%s" % (clk,rst)
+
+        # print operation
+        if self.operatestate == 1 & self.modestate == 1:
+            self.tb_content += '''\ninit\nbegin\n\n    $finish;\nend\n'''
+
         # UUT
         self.tb_content += "\n%s %su_%s (\n%s\n);" % (self.name, self.paraDef, self.name, self.portList)
 
+        # endmodule
+        if self.modestate == 1:
+            self.tb_content += "\n\nendmodule"
+
         self.output_textedit.setPlainText(self.tb_content)
+        self.result_label.setText("Gen success!")
         self.tb_content = ''
 
 
@@ -395,3 +424,10 @@ if __name__ == '__main__':
     window = TestbenchGenerator()
     window.show()
     sys.exit(app.exec_())
+
+
+
+# TODO:
+# UUT 名字 回车 i/o
+# 时钟频率
+

@@ -6,9 +6,15 @@ class TestbenchGenerator(QWidget):
     def __init__(self):
         super().__init__()
         self.setWindowTitle('Verilog Testbench Generator')
-        self.resize(800, 600)
+        self.resize(900, 700)
         self.setWindowIcon(QIcon('images/verilog.png'))
+        self.modestate = 1
+        self.alignstate = 3
+        self.operatestate = 2
+        self.tb_content = ''
 
+
+        # component
         self.module_label = QLabel('Verilog Module:')
         self.module_input = QLineEdit()
         self.browse_button = QPushButton('Browse')
@@ -18,13 +24,14 @@ class TestbenchGenerator(QWidget):
         self.copy_button.setFixedWidth(80)
         self.copy_button.clicked.connect(self.copy_to_clipboard)
         self.pattern_text = QTextEdit()
+        self.pattern_text.setReadOnly(True)
         self.output_textedit = QTextEdit()
         self.result_label = QLabel('')
 
         self.mode_option = QGroupBox("mode")
         self.mode_option1 = QRadioButton('TestBench')
         self.mode_option2 = QRadioButton('Instance')
-        self.mode_option1.setChecked(True)  # Set default option
+        self.mode_option1.setChecked(True)
         mode_option_layout = QHBoxLayout()
         mode_option_layout.addWidget(self.mode_option1)
         mode_option_layout.addWidget(self.mode_option2)
@@ -34,12 +41,30 @@ class TestbenchGenerator(QWidget):
         self.align_option1 = QRadioButton('None')
         self.align_option2 = QRadioButton('Half')
         self.align_option3 = QRadioButton('Full')
-        self.align_option1.setChecked(True)  # Set default option
+        self.align_option3.setChecked(True)
         align_option_layout = QHBoxLayout()
         align_option_layout.addWidget(self.align_option1)
         align_option_layout.addWidget(self.align_option2)
         align_option_layout.addWidget(self.align_option3)
         self.align_option.setLayout(align_option_layout)
+
+        self.operate_option = QGroupBox("operate")
+        self.operate_option1 = QRadioButton('EN')
+        self.operate_option2 = QRadioButton('OFF')
+        self.operate_option2.setChecked(True)
+        operate_option_layout = QHBoxLayout()
+        operate_option_layout.addWidget(self.operate_option1)
+        operate_option_layout.addWidget(self.operate_option2)
+        self.operate_option.setLayout(operate_option_layout)
+
+        self.mode_option1.toggled.connect(self.mode_state)
+        # self.mode_option2.toggled.connect(self.mode_state)
+        self.align_option1.toggled.connect(self.align_state)
+        self.align_option2.toggled.connect(self.align_state)
+        self.align_option3.toggled.connect(self.align_state)
+        self.operate_option1.toggled.connect(self.operate_state)
+        # self.operate_option2.toggled.connect(self.operate_state)
+
 
         # layout
         layoutH1 = QHBoxLayout()
@@ -51,6 +76,7 @@ class TestbenchGenerator(QWidget):
         layoutV2 = QVBoxLayout()
         layoutV2.addWidget(self.mode_option)
         layoutV2.addWidget(self.align_option)
+        layoutV2.addWidget(self.operate_option)
         layoutV2.addWidget(self.pattern_text)
 
         layoutH2 = QHBoxLayout()
@@ -74,14 +100,39 @@ class TestbenchGenerator(QWidget):
         if file_dialog.exec_():
             file_path = file_dialog.selectedFiles()[0]
             self.module_input.setText(file_path)
-        
+
         self.Gen()
 
     def copy_to_clipboard(self):
         clipboard = QApplication.clipboard()
         clipboard.setText(self.output_textedit.toPlainText())
-        # QMessageBox.information(self, 'Copied', 'Content copied to clipboard.')
         self.result_label.setText(f"Content copied to clipboard.")
+
+    def mode_state(self):
+        if self.mode_option1.isChecked():
+            self.modestate = 1
+            self.operate_option.setEnabled(True)
+        else:
+            self.modestate = 2
+            self.operate_option.setEnabled(False)
+        self.Gen()
+
+    def align_state(self):
+        if self.align_option1.isChecked():
+            self.alignstate = 1
+        elif self.align_option2.isChecked():
+            self.alignstate = 2
+        elif self.align_option3.isChecked():
+            self.alignstate = 3
+        self.Gen()
+
+    def operate_state(self):
+        if self.operate_option1.isChecked():
+            self.operatestate = 1
+        else:
+            self.operatestate = 2
+        self.Gen()
+
 
 
     def delComment(self, Text):
@@ -113,7 +164,6 @@ class TestbenchGenerator(QWidget):
     def portDeclare(self, inText, portArr):
         """find port declare, Syntax:
            input [ net_type ] [ signed ] [ range ] list_of_port_identifiers
-
            return list as : (port, [range])
         """
         port_definition = re.compile(
@@ -152,36 +202,57 @@ class TestbenchGenerator(QWidget):
         str = ''
         if PortList != []:
             l1 = max([len(i[0]) for i in PortList]) + 1
-            # l2 = max([len(i[1]) for i in PortList])
+            l2 = max([len(i[1]) for i in PortList])
 
             strList = []
             for pl in AllPortList:
                 if pl != []:
-                    # str = ',\n'.join( [' '*4 + '.' + i[0].ljust(l1)
-                    #                   + '( ' + (i[0].ljust(l1) + i[1].ljust(l2))
-                    #                   + ' )' for i in pl])
-                    str = ',\n'.join( [' '*4 + '.' + i[0].ljust(l1)
-                                      + '( ' + (i[0].ljust(l1-1))
-                                      + ' )' for i in pl])
+                    if self.alignstate == 1:
+                        str = ',\n'.join( [' '*4 + '.' + i[0]
+                                    + ' ( ' + (i[0] + i[1]) + ' )' for i in pl])
+                    elif self.alignstate == 2:
+                        str = ',\n'.join( [' '*4 + '.' + i[0].ljust(l1)
+                                    + '( ' + (i[0].ljust(l1-1)) + ' )' for i in pl])
+                    elif self.alignstate == 3:
+                        str = ',\n'.join( [' '*4 + '.' + i[0].ljust(l1)
+                                    + '( ' + (i[0].ljust(l1-1)) + ' )' for i in pl])
                     strList += [str]
-
             str = ',\n\n'.join(strList)
 
         return str
 
-    def formatDeclare(self, PortList, portArr, initial = ""):
+    def formatDeclare(self, PortList, portArr, init = ""):
         str = ''
 
         if PortList != []:
-            l1 = max([len(i[0]) for i in PortList if i[1] == ''])
+            if self.alignstate == 1:
+                pass
+            elif self.alignstate == 2:
+                l1 = max([len(i[0]) for i in PortList if i[1] == ''])
+            elif self.alignstate == 3:
+                l1 = max([len(i[0]) for i in PortList])
+                l2 = max([len(i[1]) for i in PortList])
 
-            if initial != "":
-                initial = " = " + initial
-                str = '\n'.join( [portArr.ljust(4) + ' ' + (i[1] + min(len(i[1]), 1)*' '
-                               + i[0]).ljust(l1) + initial + ';' for i in PortList])
+            if init != "":
+                init = " = " + init
+
+                if self.alignstate == 1:
+                    str = '\n'.join([portArr + ' ' + (i[1] + min(len(i[1]), 1)*' ' + i[0]) + init + ';' for i in PortList])
+                elif self.alignstate == 2:
+                    str = '\n'.join([portArr.ljust(4) + ' ' + (i[1] + min(len(i[1]), 1)*' '
+                                + i[0]).ljust(l1) + init + ';' for i in PortList])
+                elif self.alignstate == 3:
+                    str = '\n'.join([portArr.ljust(4) + ' ' + (i[1].ljust(l2+1)
+                                + i[0]).ljust(l1+l2+1) + init + ';' for i in PortList])
             else:
-                str = '\n'.join( [portArr.ljust(4) + ' ' + (i[1] + min(len(i[1]), 1)*' '
-                               + i[0]) + ';' for i in PortList])
+                if self.alignstate == 1:
+                    str = '\n'.join([portArr + ' ' + (i[1] + min(len(i[1]), 1)*' ' + i[0]) + ';' for i in PortList])
+                elif self.alignstate == 2:
+                    str = '\n'.join([portArr.ljust(4) + ' ' + (i[1] + min(len(i[1]), 1)*' '
+                                + i[0]) + ';' for i in PortList])
+                elif self.alignstate == 3:
+                    str = '\n'.join([portArr.ljust(4) + ' ' + (i[1].ljust(l2+1)
+                                + i[0]).ljust(l1+l2+1) + ';' for i in PortList])
         return str
 
     def formatPara(self, ParaList):
@@ -193,22 +264,45 @@ class TestbenchGenerator(QWidget):
             p = re.findall(pat, s)
 
             l1 = max([len(i[0]) for i in p])
-            # l2 = max([len(i[1]) for i in p])
-            # paraDec = '\n'.join( ['parameter %s = %s;' % (i[0].ljust(l1 + 1), i[1].ljust(l2)) for i in p])
-            paraDec = '\n'.join( ['parameter %s = %s;' % (i[0].ljust(l1 + 1), i[1]) for i in p])
-            paraDef = '#(\n' +',\n'.join( ['    .'+ i[0].ljust(l1 + 1)
-                        + '( ' + i[0].ljust(l1 ) + ' )' for i in p]) + ')\n'
+            l2 = max([len(i[1]) for i in p])
+
+            if self.alignstate == 1:
+                paraDec = '\n'.join( ['parameter %s = %s;' % (i[0], i[1]) for i in p])
+            elif self.alignstate == 2:
+                paraDec = '\n'.join( ['parameter %s = %s;' % (i[0].ljust(l1 + 1), i[1]) for i in p])
+            elif self.alignstate == 3:
+                paraDec = '\n'.join( ['parameter %s = %s;' % (i[0].ljust(l1 + 1), i[1].ljust(l2)) for i in p])
+
+            if self.alignstate == 1:
+                paraDef = '#(\n' + ',\n'.join( ['    .'+ i[0] + ' ( ' + i[0] + ' )' for i in p]) + ')\n'
+            elif self.alignstate == 2:
+                paraDef = '#(\n' + ',\n'.join( ['    .'+ i[0].ljust(l1 + 1)
+                            + '( ' + i[0].ljust(l1) + ' )' for i in p]) + ')\n'
+            elif self.alignstate == 3:
+                paraDef = '#(\n' + ',\n'.join( ['    .'+ i[0].ljust(l1 + 1)
+                            + '( ' + i[0].ljust(l1) + ' )' for i in p]) + ')\n'
         else:
             l1 = 6
-            # l2 = 2
-        # preDec = '\n'.join(['parameter %s = %s;\n' % ('T'.ljust(l1+1), '10'.ljust(l2))])
-        preDec = '\n'.join(['parameter %s = %s;\n' % ('T'.ljust(l1+1), '10')])
+            l2 = 2
+
+        if self.modestate == 1:
+            if self.alignstate == 1:
+                preDec = '\n'.join(['parameter %s = %s;\n' % ('T', '10')])
+            elif self.alignstate == 2:
+                preDec = '\n'.join(['parameter %s = %s;\n' % ('T'.ljust(l1+1), '10')])
+            elif self.alignstate == 3:
+                preDec = '\n'.join(['parameter %s = %s;\n' % ('T'.ljust(l1+1), '10'.ljust(l2))])
+        elif self.modestate == 2:
+            preDec = ''
+
         paraDec = preDec + paraDec
         return paraDec, paraDef
 
 
     def Gen(self):
         input_file = self.module_input.text()
+        if not input_file:
+            return
         with open(input_file, 'rb') as f:
             f_info = chardet.detect(f.read())
             f_encoding = f_info['encoding']
@@ -238,19 +332,19 @@ class TestbenchGenerator(QWidget):
         self.output = self.formatDeclare(self.output, 'wire')
         self.inout  = self.formatDeclare(self.inout, 'wire')
 
-        self.tb_content = ''
-        self.Testbench_Gen()
-        # self.Instance_Gen()
+
+        self.GEN()
 
     """ generate testbench """
-    def Testbench_Gen(self):
+    def GEN(self):
         # write testbench
-        self.tb_content += '`timescale 1ns / 1ps\n'
-        self.tb_content += "module tb_%s;\n" % self.name
+        if self.modestate == 1:
+            self.tb_content += '`timescale 1ns / 1ps\n'
+            self.tb_content += "module tb_%s;\n\n" % self.name
 
         # module_parameter_port_list
-        if(self.paraDec!=''):
-            self.tb_content += "\n// %s Parameters\n%s\n" % (self.name, self.paraDec)
+        if(self.paraDec != ''):
+            self.tb_content += "// %s Parameters\n%s\n" % (self.name, self.paraDec)
 
         # list_of_port_declarations
         if(self.input != ''):
@@ -261,40 +355,24 @@ class TestbenchGenerator(QWidget):
             self.tb_content += "\n// %s Inouts\n%s\n" % (self.name, self.inout)
 
         # print clock
-        clk = '''\ninitial\nbegin\n    forever #(T/2) clk = ~clk;\nend\n'''
-        rst = '''\ninitial\nbegin\n    #(T*2) rst_n = 1;\nend\n'''
-        self.tb_content += "%s%s" % (clk,rst)
+        if self.modestate == 1:
+            clk = '''\ninit begin\n    forever #(T/2) clk = ~clk;\nend\n'''
+            rst = '''\ninit begin\n    #(T*2) rst_n = 1;\nend\n'''
+            self.tb_content += "%s%s" % (clk,rst)
 
         # print operation
-        self.tb_content += '''\ninitial\nbegin\n\n    $finish;\nend\n'''
+        if self.operatestate == 1 & self.modestate == 1:
+            self.tb_content += '''\ninit\nbegin\n\n    $finish;\nend\n'''
 
         # UUT
-        self.tb_content += "\n%s %su_%s (\n%s\n);\n" % (self.name, self.paraDef, self.name, self.portList)
+        self.tb_content += "\n%s %su_%s (\n%s\n);" % (self.name, self.paraDef, self.name, self.portList)
 
         # endmodule
-        self.tb_content += "endmodule"
+        if self.modestate == 1:
+            self.tb_content += "\n\nendmodule"
 
         self.output_textedit.setPlainText(self.tb_content)
-
-    """ generate instance """
-    def Instance_Gen(self):
-        # write Instance
-        # module_parameter_port_list
-        if(self.paraDec!=''):
-            self.tb_content += "\n// %s Parameters\n%s\n" % (self.name, self.paraDec)
-
-        # list_of_port_declarations
-        if(self.input != ''):
-            self.tb_content += "\n// %s Inputs\n%s\n" % (self.name, self.input)
-        if(self.output != ''):
-            self.tb_content += "\n// %s Outputs\n%s\n" % (self.name, self.output)
-        if(self.inout != ''):
-            self.tb_content += "\n// %s Inouts\n%s\n" % (self.name, self.inout)
-
-        # UUT
-        self.tb_content += "\n%s %su_%s (\n%s\n);\n" % (self.name, self.paraDef, self.name, self.portList)
-
-        self.output_textedit.setPlainText(self.tb_content)
+        self.tb_content = ''
 
 
 if __name__ == '__main__':
