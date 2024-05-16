@@ -1,18 +1,22 @@
 import sys, re, chardet
-from PyQt5.QtWidgets import QApplication, QWidget, QLabel, QLineEdit, QPushButton, QVBoxLayout, QHBoxLayout, QFileDialog, QTextEdit, QGroupBox, QRadioButton
+from PyQt5.QtWidgets import QApplication, QWidget, QLabel, QLineEdit, QPushButton, QVBoxLayout, QComboBox
+from PyQt5.QtWidgets import QHBoxLayout, QFileDialog, QTextEdit, QGroupBox, QRadioButton, QCheckBox
 from PyQt5.QtGui import QIcon
 
 class TestbenchGenerator(QWidget):
     def __init__(self):
         super().__init__()
         self.setWindowTitle('Verilog Testbench Generator')
-        self.resize(900, 700)
+        self.resize(900, 800)
         self.setWindowIcon(QIcon('images/verilog.png'))
+        
+        self.fileenstate = 0
+        self.realtimestate = 1
         self.modestate = 1
         self.alignstate = 3
         self.operatestate = 2
         self.tb_content = ''
-
+        self.TFupdating = False
 
         # component
         self.module_label = QLabel('Verilog Module:')
@@ -20,15 +24,14 @@ class TestbenchGenerator(QWidget):
         self.browse_button = QPushButton('Browse')
         self.browse_button.setFixedWidth(80)
         self.browse_button.clicked.connect(self.browse_file)
-        self.copy_button = QPushButton('Copy')
-        self.copy_button.setFixedWidth(80)
-        self.copy_button.clicked.connect(self.copy_to_clipboard)
-        self.pattern_text = QTextEdit()
-        self.pattern_text.setReadOnly(True)
-        self.output_textedit = QTextEdit()
-        self.result_label = QLabel('')
+        self.input_text = QTextEdit()
+        self.input_text.setLineWrapMode(QTextEdit.NoWrap)
+        self.input_text.textChanged.connect(self.inputtext_change)
+        self.output_text = QTextEdit()
+        self.output_text.setLineWrapMode(QTextEdit.NoWrap)
 
-        self.mode_option = QGroupBox("mode")
+
+        self.mode_option = QGroupBox("")
         self.mode_option1 = QRadioButton('TestBench')
         self.mode_option2 = QRadioButton('Instance')
         self.mode_option1.setChecked(True)
@@ -36,6 +39,8 @@ class TestbenchGenerator(QWidget):
         mode_option_layout.addWidget(self.mode_option1)
         mode_option_layout.addWidget(self.mode_option2)
         self.mode_option.setLayout(mode_option_layout)
+        self.mode_option1.toggled.connect(self.mode_state)
+        # self.mode_option2.toggled.connect(self.mode_state)
 
         self.align_option = QGroupBox("align")
         self.align_option1 = QRadioButton('None')
@@ -47,23 +52,46 @@ class TestbenchGenerator(QWidget):
         align_option_layout.addWidget(self.align_option2)
         align_option_layout.addWidget(self.align_option3)
         self.align_option.setLayout(align_option_layout)
-
-        self.operate_option = QGroupBox("operate")
-        self.operate_option1 = QRadioButton('EN')
-        self.operate_option2 = QRadioButton('OFF')
-        self.operate_option2.setChecked(True)
-        operate_option_layout = QHBoxLayout()
-        operate_option_layout.addWidget(self.operate_option1)
-        operate_option_layout.addWidget(self.operate_option2)
-        self.operate_option.setLayout(operate_option_layout)
-
-        self.mode_option1.toggled.connect(self.mode_state)
-        # self.mode_option2.toggled.connect(self.mode_state)
         self.align_option1.toggled.connect(self.align_state)
         self.align_option2.toggled.connect(self.align_state)
         self.align_option3.toggled.connect(self.align_state)
-        self.operate_option1.toggled.connect(self.operate_state)
-        # self.operate_option2.toggled.connect(self.operate_state)
+
+        self.operate_option = QCheckBox('operate')
+        self.operate_option.setStyleSheet("QCheckBox::indicator { subcontrol-origin: padding; subcontrol-position: left; }")
+        self.operate_option.stateChanged.connect(self.operate_state)
+
+        self.time_label = QLabel('T:')
+        self.time_input = QLineEdit('20')
+        self.time_input.textChanged.connect(self.time_input_changed)
+        self.time_unit = QComboBox()
+        self.time_unit.addItems(["ps", "ns", "us", "ms", "s"])
+        self.time_unit.setCurrentIndex(1)
+        self.time_unit.currentIndexChanged.connect(self.time_unit_changed)
+        self.frequency_label = QLabel('f:')
+        self.frequency_input = QLineEdit('50')
+        self.frequency_input.textChanged.connect(self.frequency_input_changed)
+        self.frequency_unit = QComboBox()
+        self.frequency_unit.addItems(["", "K", "M", "G"])
+        self.frequency_unit.setCurrentIndex(2)
+        self.frequency_unit.currentIndexChanged.connect(self.frequency_unit_changed)
+        clk_layout = QHBoxLayout()
+        clk_layout.addWidget(self.time_label)
+        clk_layout.addWidget(self.time_input)
+        clk_layout.addWidget(self.time_unit)
+        clk_layout.addWidget(self.frequency_label)
+        clk_layout.addWidget(self.frequency_input)
+        clk_layout.addWidget(self.frequency_unit)
+
+        self.gen_button = QPushButton('Gen')
+        self.gen_button.setFixedWidth(80)
+        self.gen_button.clicked.connect(self.Gen)
+        self.realtime = QCheckBox('RT')
+        self.realtime.setChecked(True)
+        self.realtime.stateChanged.connect(self.realtime_state)
+        self.result_label = QLabel('')
+        self.copy_button = QPushButton('Copy')
+        self.copy_button.setFixedWidth(135)
+        self.copy_button.clicked.connect(self.copy_to_clipboard)
 
 
         # layout
@@ -71,42 +99,61 @@ class TestbenchGenerator(QWidget):
         layoutH1.addWidget(self.module_label)
         layoutH1.addWidget(self.module_input)
         layoutH1.addWidget(self.browse_button)
-        layoutH1.addWidget(self.copy_button)
 
         layoutV2 = QVBoxLayout()
         layoutV2.addWidget(self.mode_option)
         layoutV2.addWidget(self.align_option)
         layoutV2.addWidget(self.operate_option)
-        layoutV2.addWidget(self.pattern_text)
+        layoutV2.addLayout(clk_layout)
+        layoutV2.addWidget(self.input_text)
 
         layoutH2 = QHBoxLayout()
         layoutH2.addLayout(layoutV2)
-        layoutH2.addWidget(self.output_textedit)
-        layoutH2.setStretch(0, 3)
-        layoutH2.setStretch(1, 7)
+        layoutH2.addWidget(self.output_text)
+        layoutH2.setStretch(0, 4)
+        layoutH2.setStretch(1, 6)
+
+        layoutH3 = QHBoxLayout()
+        layoutH3.addWidget(self.gen_button)
+        layoutH3.addWidget(self.realtime)
+        layoutH3.addWidget(self.result_label)
+        layoutH3.addWidget(self.copy_button)
 
         layoutV1 = QVBoxLayout()
         layoutV1.addLayout(layoutH1)
         layoutV1.addLayout(layoutH2)
-        layoutV1.addWidget(self.result_label)
+        layoutV1.addLayout(layoutH3)
 
         self.setLayout(layoutV1)
 
     def browse_file(self):
         file_dialog = QFileDialog(self)
         file_dialog.setNameFilter("Verilog Files (*.v)")
-        file_dialog.selectFile("test.v")
+        # file_dialog.selectFile("test.v")
 
         if file_dialog.exec_():
             file_path = file_dialog.selectedFiles()[0]
             self.module_input.setText(file_path)
 
-        self.Gen()
+            input_file = self.module_input.text()
+            if not input_file:
+                return
+            with open(input_file, 'rb') as f:
+                f_info = chardet.detect(f.read())
+                f_encoding = f_info['encoding']
+            with open(input_file, encoding=f_encoding) as inFile:
+                self.input_text.setPlainText(inFile.read())
 
     def copy_to_clipboard(self):
         clipboard = QApplication.clipboard()
-        clipboard.setText(self.output_textedit.toPlainText())
+        clipboard.setText(self.output_text.toPlainText())
         self.result_label.setText(f"Content copied to clipboard.")
+
+    def realtime_state(self):
+        if self.realtime.isChecked():
+            self.realtimestate = 1
+        else:
+            self.realtimestate = 0
 
     def mode_state(self):
         if self.mode_option1.isChecked():
@@ -127,14 +174,77 @@ class TestbenchGenerator(QWidget):
         self.Gen()
 
     def operate_state(self):
-        if self.operate_option1.isChecked():
+        if self.operate_option.isChecked():
             self.operatestate = 1
         else:
             self.operatestate = 2
         self.Gen()
 
+    def inputtext_change(self):
+        if self.realtimestate:
+            self.Gen()
+
+    def time_input_changed(self, text):
+        if not self.TFupdating:
+            try:
+                value = float(text)
+            except ValueError:
+                value = 0.0
+            self.update_frequency_from_time(value)
+
+    def frequency_input_changed(self, text):
+        if not self.TFupdating:
+            try:
+                value = float(text)
+            except ValueError:
+                value = 0.0
+            self.update_time_from_frequency(value)
+
+    def time_unit_changed(self, index):
+        if not self.TFupdating:
+            frequency = float(self.frequency_input.text())
+            self.update_time_from_frequency(frequency)
+
+    def frequency_unit_changed(self, index):
+        if not self.TFupdating:
+            time = float(self.time_input.text())
+            self.update_frequency_from_time(time)
+
+    def update_frequency_from_time(self, time):
+        self.TFupdating = True
+        try:
+            frequency = round(self.convert_to_frequency(time), 2)
+            self.frequency_input.setText(str(frequency))
+        except:
+            pass
+        self.TFupdating = False
+
+    def update_time_from_frequency(self, frequency):
+        self.TFupdating = True
+        try:
+            time = round(self.convert_to_time(frequency), 2)
+            self.time_input.setText(str(time))
+        except:
+            pass
+        self.TFupdating = False
+
+    def convert_to_frequency(self, time):
+        time_unit_index = self.time_unit.currentIndex()
+        time_unit_value = 10 ** ((time_unit_index+2) * 3)
+        frequency_unit_index = self.frequency_unit.currentIndex()
+        frequency_unit_value = 10 ** (frequency_unit_index * 3)
+        return time_unit_value / (time * frequency_unit_value)
+
+    def convert_to_time(self, frequency):
+        frequency_unit_index = self.frequency_unit.currentIndex()
+        frequency_unit_value = 10 ** (frequency_unit_index * 3)
+        time_unit_index = self.time_unit.currentIndex()
+        time_unit_value = 10 ** ((4-time_unit_index) * 3)
+        return time_unit_value / (frequency * frequency_unit_value)
 
 
+
+    # testbench 生成逻辑
     def delComment(self, Text):
         """ removed comment """
         single_line_comment = re.compile(r"//(.*)$", re.MULTILINE)
@@ -225,13 +335,17 @@ class TestbenchGenerator(QWidget):
         str = ''
 
         if PortList != []:
-            if self.alignstate == 1:
-                pass
-            elif self.alignstate == 2:
-                l1 = max([len(i[0]) for i in PortList if i[1] == ''])
-            elif self.alignstate == 3:
-                l1 = max([len(i[0]) for i in PortList])
-                l2 = max([len(i[1]) for i in PortList])
+            try:
+                if self.alignstate == 1:
+                    pass
+                elif self.alignstate == 2:
+                    l1 = max([len(i[0]) for i in PortList if i[1] == ''])
+                elif self.alignstate == 3:
+                    l1 = max([len(i[0]) for i in PortList])
+                    l2 = max([len(i[1]) for i in PortList])
+            except:
+                l1 = 0
+                l2 = 0
 
             if init != "":
                 init = " = " + init
@@ -258,6 +372,8 @@ class TestbenchGenerator(QWidget):
     def formatPara(self, ParaList):
         paraDec = ''
         paraDef = ''
+        l1 = 0
+        l2 = 0
         if ParaList != []:
             s = '\n'.join(ParaList)
             pat = r'([a-zA-Z_][a-zA-Z_0-9]*)\s*=\s*([\w\W]*?)\s*[;,)]'
@@ -281,9 +397,6 @@ class TestbenchGenerator(QWidget):
             elif self.alignstate == 3:
                 paraDef = '#(\n' + ',\n'.join( ['    .'+ i[0].ljust(l1 + 1)
                             + '( ' + i[0].ljust(l1) + ' )' for i in p]) + ')\n'
-        else:
-            l1 = 6
-            l2 = 2
 
         if self.modestate == 1:
             if self.alignstate == 1:
@@ -300,15 +413,13 @@ class TestbenchGenerator(QWidget):
 
 
     def Gen(self):
-        input_file = self.module_input.text()
-        if not input_file:
-            return
-        with open(input_file, 'rb') as f:
-            f_info = chardet.detect(f.read())
-            f_encoding = f_info['encoding']
-        with open(input_file, encoding=f_encoding) as inFile:
-            inText = inFile.read()
+        inText = self.input_text.toPlainText()
 
+        if not inText:
+            self.result_label.setText(f"No input!")
+            return
+
+        # try:
         # removed comment, task, function
         inText = self.delComment(inText)
         inText = self.delBlock(inText)
@@ -332,8 +443,9 @@ class TestbenchGenerator(QWidget):
         self.output = self.formatDeclare(self.output, 'wire')
         self.inout  = self.formatDeclare(self.inout, 'wire')
 
-
         self.GEN()
+        # except:
+        #     self.result_label.setText(f"Error!")
 
     """ generate testbench """
     def GEN(self):
@@ -371,7 +483,8 @@ class TestbenchGenerator(QWidget):
         if self.modestate == 1:
             self.tb_content += "\n\nendmodule"
 
-        self.output_textedit.setPlainText(self.tb_content)
+        self.output_text.setPlainText(self.tb_content)
+        self.result_label.setText("Gen success!")
         self.tb_content = ''
 
 
@@ -380,3 +493,9 @@ if __name__ == '__main__':
     window = TestbenchGenerator()
     window.show()
     sys.exit(app.exec_())
+
+
+
+# TODO:
+# UUT 名字 回车 i/o
+

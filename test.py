@@ -10,11 +10,6 @@ class TestbenchGenerator(QWidget):
         self.resize(900, 800)
         self.setWindowIcon(QIcon('images/verilog.png'))
         
-        self.fileenstate = 0
-        self.realtimestate = 1
-        self.modestate = 1
-        self.alignstate = 3
-        self.operatestate = 2
         self.tb_content = ''
         self.TFupdating = False
 
@@ -26,7 +21,7 @@ class TestbenchGenerator(QWidget):
         self.browse_button.clicked.connect(self.browse_file)
         self.input_text = QTextEdit()
         self.input_text.setLineWrapMode(QTextEdit.NoWrap)
-        self.input_text.textChanged.connect(self.inputtext_change)
+        self.input_text.textChanged.connect(self.RT_Gen)
         self.output_text = QTextEdit()
         self.output_text.setLineWrapMode(QTextEdit.NoWrap)
 
@@ -39,8 +34,7 @@ class TestbenchGenerator(QWidget):
         mode_option_layout.addWidget(self.mode_option1)
         mode_option_layout.addWidget(self.mode_option2)
         self.mode_option.setLayout(mode_option_layout)
-        self.mode_option1.toggled.connect(self.mode_state)
-        # self.mode_option2.toggled.connect(self.mode_state)
+        self.mode_option1.toggled.connect(self.mode_change)
 
         self.align_option = QGroupBox("align")
         self.align_option1 = QRadioButton('None')
@@ -52,13 +46,25 @@ class TestbenchGenerator(QWidget):
         align_option_layout.addWidget(self.align_option2)
         align_option_layout.addWidget(self.align_option3)
         self.align_option.setLayout(align_option_layout)
-        self.align_option1.toggled.connect(self.align_state)
-        self.align_option2.toggled.connect(self.align_state)
-        self.align_option3.toggled.connect(self.align_state)
+        self.align_option1.toggled.connect(self.RT_Gen)
+        self.align_option2.toggled.connect(self.RT_Gen)
+        self.align_option3.toggled.connect(self.RT_Gen)
 
+        self.init_label = QLabel('Init:')
+        self.clk_option = QCheckBox('clk')
+        self.clk_option.setChecked(True)
+        self.clk_option.stateChanged.connect(self.RT_Gen)
+        self.rst_option = QCheckBox('rst')
+        self.rst_option.setChecked(True)
+        self.rst_option.stateChanged.connect(self.RT_Gen)
         self.operate_option = QCheckBox('operate')
-        self.operate_option.setStyleSheet("QCheckBox::indicator { subcontrol-origin: padding; subcontrol-position: left; }")
-        self.operate_option.stateChanged.connect(self.operate_state)
+        self.operate_option.stateChanged.connect(self.RT_Gen)
+        init_layout = QHBoxLayout()
+        init_layout.addWidget(self.init_label)
+        init_layout.addWidget(self.clk_option)
+        init_layout.addWidget(self.rst_option)
+        init_layout.addWidget(self.operate_option)
+        # TODO: clk rst自定义
 
         self.time_label = QLabel('T:')
         self.time_input = QLineEdit('20')
@@ -81,13 +87,26 @@ class TestbenchGenerator(QWidget):
         clk_layout.addWidget(self.frequency_label)
         clk_layout.addWidget(self.frequency_input)
         clk_layout.addWidget(self.frequency_unit)
+        # TODO: 生成修改
+
+        self.UUT_label = QLabel('UUT:')
+        self.UUT_IO_option = QCheckBox('IO')
+        self.UUT_IO_option.setChecked(False)
+        self.UUT_IO_option.stateChanged.connect(self.RT_Gen)
+        self.UUT_CR_option = QCheckBox('CR')
+        self.UUT_CR_option.setChecked(False)
+        self.UUT_CR_option.stateChanged.connect(self.RT_Gen)
+        UUT_layout = QHBoxLayout()
+        UUT_layout.addWidget(self.UUT_label)
+        UUT_layout.addWidget(self.UUT_IO_option)
+        UUT_layout.addWidget(self.UUT_CR_option)
+        # TODO: clk rst自定义
 
         self.gen_button = QPushButton('Gen')
         self.gen_button.setFixedWidth(80)
         self.gen_button.clicked.connect(self.Gen)
         self.realtime = QCheckBox('RT')
         self.realtime.setChecked(True)
-        self.realtime.stateChanged.connect(self.realtime_state)
         self.result_label = QLabel('')
         self.copy_button = QPushButton('Copy')
         self.copy_button.setFixedWidth(135)
@@ -103,8 +122,9 @@ class TestbenchGenerator(QWidget):
         layoutV2 = QVBoxLayout()
         layoutV2.addWidget(self.mode_option)
         layoutV2.addWidget(self.align_option)
-        layoutV2.addWidget(self.operate_option)
+        layoutV2.addLayout(init_layout)
         layoutV2.addLayout(clk_layout)
+        layoutV2.addLayout(UUT_layout)
         layoutV2.addWidget(self.input_text)
 
         layoutH2 = QHBoxLayout()
@@ -149,39 +169,27 @@ class TestbenchGenerator(QWidget):
         clipboard.setText(self.output_text.toPlainText())
         self.result_label.setText(f"Content copied to clipboard.")
 
-    def realtime_state(self):
-        if self.realtime.isChecked():
-            self.realtimestate = 1
-        else:
-            self.realtimestate = 0
-
-    def mode_state(self):
+    def mode_change(self):
         if self.mode_option1.isChecked():
-            self.modestate = 1
+            self.clk_option.setEnabled(True)
+            self.rst_option.setEnabled(True)
             self.operate_option.setEnabled(True)
+            self.time_input.setEnabled(True)
+            self.time_unit.setEnabled(True)
+            self.frequency_input.setEnabled(True)
+            self.frequency_unit.setEnabled(True)
         else:
-            self.modestate = 2
+            self.clk_option.setEnabled(False)
+            self.rst_option.setEnabled(False)
             self.operate_option.setEnabled(False)
-        self.Gen()
+            self.time_input.setEnabled(False)
+            self.time_unit.setEnabled(False)
+            self.frequency_input.setEnabled(False)
+            self.frequency_unit.setEnabled(False)
+        self.RT_Gen()
 
-    def align_state(self):
-        if self.align_option1.isChecked():
-            self.alignstate = 1
-        elif self.align_option2.isChecked():
-            self.alignstate = 2
-        elif self.align_option3.isChecked():
-            self.alignstate = 3
-        self.Gen()
-
-    def operate_state(self):
-        if self.operate_option.isChecked():
-            self.operatestate = 1
-        else:
-            self.operatestate = 2
-        self.Gen()
-
-    def inputtext_change(self):
-        if self.realtimestate:
+    def RT_Gen(self):
+        if self.realtime.isChecked():
             self.Gen()
 
     def time_input_changed(self, text):
@@ -315,19 +323,45 @@ class TestbenchGenerator(QWidget):
             l2 = max([len(i[1]) for i in PortList])
 
             strList = []
-            for pl in AllPortList:
+            for idx, pl in enumerate(AllPortList):
                 if pl != []:
-                    if self.alignstate == 1:
-                        str = ',\n'.join( [' '*4 + '.' + i[0]
-                                    + ' ( ' + (i[0] + i[1]) + ' )' for i in pl])
-                    elif self.alignstate == 2:
-                        str = ',\n'.join( [' '*4 + '.' + i[0].ljust(l1)
-                                    + '( ' + (i[0].ljust(l1-1)) + ' )' for i in pl])
-                    elif self.alignstate == 3:
-                        str = ',\n'.join( [' '*4 + '.' + i[0].ljust(l1)
-                                    + '( ' + (i[0].ljust(l1-1)) + ' )' for i in pl])
+                    if self.UUT_IO_option.isChecked():
+                        if self.align_option1.isChecked():
+                            if idx == 0:
+                                str = ',\n'.join(['/*i*/' + '.' + i[0] + ' ( ' + (i[0] + i[1]) + ' )' for i in pl])
+                            if idx == 1:
+                                str = ',\n'.join(['/*o*/' + '.' + i[0] + ' ( ' + (i[0] + i[1]) + ' )' for i in pl])
+                            if idx == 2:
+                                str = ',\n'.join(['/*io*/' + '.' + i[0] + ' ( ' + (i[0] + i[1]) + ' )' for i in pl])
+                        elif self.align_option2.isChecked():
+                            if idx == 0:
+                                str = ',\n'.join(['/*i*/' + '.' + i[0].ljust(l1) + '( ' + (i[0].ljust(l1-1)) + ' )' for i in pl])
+                            if idx == 1:
+                                str = ',\n'.join(['/*o*/' + '.' + i[0].ljust(l1) + '( ' + (i[0].ljust(l1-1)) + ' )' for i in pl])
+                            if idx == 2:
+                                str = ',\n'.join(['/*io*/' + '.' + i[0].ljust(l1) + '( ' + (i[0].ljust(l1-1)) + ' )' for i in pl])
+                        elif self.align_option3.isChecked():
+                            if idx == 0:
+                                str = ',\n'.join(['/*i*/ ' + '.' + i[0].ljust(l1) + '( ' + (i[0].ljust(l1-1)) + ' )' for i in pl])
+                            if idx == 1:
+                                str = ',\n'.join(['/*o*/ ' + '.' + i[0].ljust(l1) + '( ' + (i[0].ljust(l1-1)) + ' )' for i in pl])
+                            if idx == 2:
+                                str = ',\n'.join(['/*io*/' + '.' + i[0].ljust(l1) + '( ' + (i[0].ljust(l1-1)) + ' )' for i in pl])
+                    else:
+                        if self.align_option1.isChecked():
+                            str = ',\n'.join([' '*4 + '.' + i[0]
+                                        + ' ( ' + (i[0] + i[1]) + ' )' for i in pl])
+                        elif self.align_option2.isChecked():
+                            str = ',\n'.join([' '*4 + '.' + i[0].ljust(l1)
+                                        + '( ' + (i[0].ljust(l1-1)) + ' )' for i in pl])
+                        elif self.align_option3.isChecked():
+                            str = ',\n'.join([' '*4 + '.' + i[0].ljust(l1)
+                                        + '( ' + (i[0].ljust(l1-1)) + ' )' for i in pl])
                     strList += [str]
-            str = ',\n\n'.join(strList)
+            if self.UUT_CR_option.isChecked():
+                str = ',\n\n'.join(strList)
+            else:
+                str = ',\n'.join(strList)
 
         return str
 
@@ -336,11 +370,11 @@ class TestbenchGenerator(QWidget):
 
         if PortList != []:
             try:
-                if self.alignstate == 1:
+                if self.align_option1.isChecked():
                     pass
-                elif self.alignstate == 2:
+                elif self.align_option2.isChecked():
                     l1 = max([len(i[0]) for i in PortList if i[1] == ''])
-                elif self.alignstate == 3:
+                elif self.align_option3.isChecked():
                     l1 = max([len(i[0]) for i in PortList])
                     l2 = max([len(i[1]) for i in PortList])
             except:
@@ -350,21 +384,21 @@ class TestbenchGenerator(QWidget):
             if init != "":
                 init = " = " + init
 
-                if self.alignstate == 1:
+                if self.align_option1.isChecked():
                     str = '\n'.join([portArr + ' ' + (i[1] + min(len(i[1]), 1)*' ' + i[0]) + init + ';' for i in PortList])
-                elif self.alignstate == 2:
+                elif self.align_option2.isChecked():
                     str = '\n'.join([portArr.ljust(4) + ' ' + (i[1] + min(len(i[1]), 1)*' '
                                 + i[0]).ljust(l1) + init + ';' for i in PortList])
-                elif self.alignstate == 3:
+                elif self.align_option3.isChecked():
                     str = '\n'.join([portArr.ljust(4) + ' ' + (i[1].ljust(l2+1)
                                 + i[0]).ljust(l1+l2+1) + init + ';' for i in PortList])
             else:
-                if self.alignstate == 1:
+                if self.align_option1.isChecked():
                     str = '\n'.join([portArr + ' ' + (i[1] + min(len(i[1]), 1)*' ' + i[0]) + ';' for i in PortList])
-                elif self.alignstate == 2:
+                elif self.align_option2.isChecked():
                     str = '\n'.join([portArr.ljust(4) + ' ' + (i[1] + min(len(i[1]), 1)*' '
                                 + i[0]) + ';' for i in PortList])
-                elif self.alignstate == 3:
+                elif self.align_option3.isChecked():
                     str = '\n'.join([portArr.ljust(4) + ' ' + (i[1].ljust(l2+1)
                                 + i[0]).ljust(l1+l2+1) + ';' for i in PortList])
         return str
@@ -382,30 +416,30 @@ class TestbenchGenerator(QWidget):
             l1 = max([len(i[0]) for i in p])
             l2 = max([len(i[1]) for i in p])
 
-            if self.alignstate == 1:
+            if self.align_option1.isChecked():
                 paraDec = '\n'.join( ['parameter %s = %s;' % (i[0], i[1]) for i in p])
-            elif self.alignstate == 2:
+            elif self.align_option2.isChecked():
                 paraDec = '\n'.join( ['parameter %s = %s;' % (i[0].ljust(l1 + 1), i[1]) for i in p])
-            elif self.alignstate == 3:
+            elif self.align_option3.isChecked():
                 paraDec = '\n'.join( ['parameter %s = %s;' % (i[0].ljust(l1 + 1), i[1].ljust(l2)) for i in p])
 
-            if self.alignstate == 1:
+            if self.align_option1.isChecked():
                 paraDef = '#(\n' + ',\n'.join( ['    .'+ i[0] + ' ( ' + i[0] + ' )' for i in p]) + ')\n'
-            elif self.alignstate == 2:
+            elif self.align_option2.isChecked():
                 paraDef = '#(\n' + ',\n'.join( ['    .'+ i[0].ljust(l1 + 1)
                             + '( ' + i[0].ljust(l1) + ' )' for i in p]) + ')\n'
-            elif self.alignstate == 3:
+            elif self.align_option3.isChecked():
                 paraDef = '#(\n' + ',\n'.join( ['    .'+ i[0].ljust(l1 + 1)
                             + '( ' + i[0].ljust(l1) + ' )' for i in p]) + ')\n'
 
-        if self.modestate == 1:
-            if self.alignstate == 1:
+        if self.mode_option1.isChecked():
+            if self.align_option1.isChecked():
                 preDec = '\n'.join(['parameter %s = %s;\n' % ('T', '10')])
-            elif self.alignstate == 2:
+            elif self.align_option2.isChecked():
                 preDec = '\n'.join(['parameter %s = %s;\n' % ('T'.ljust(l1+1), '10')])
-            elif self.alignstate == 3:
+            elif self.align_option3.isChecked():
                 preDec = '\n'.join(['parameter %s = %s;\n' % ('T'.ljust(l1+1), '10'.ljust(l2))])
-        elif self.modestate == 2:
+        else:
             preDec = ''
 
         paraDec = preDec + paraDec
@@ -450,7 +484,7 @@ class TestbenchGenerator(QWidget):
     """ generate testbench """
     def GEN(self):
         # write testbench
-        if self.modestate == 1:
+        if self.mode_option1.isChecked():
             self.tb_content += '`timescale 1ns / 1ps\n'
             self.tb_content += "module tb_%s;\n\n" % self.name
 
@@ -467,21 +501,23 @@ class TestbenchGenerator(QWidget):
             self.tb_content += "\n// %s Inouts\n%s\n" % (self.name, self.inout)
 
         # print clock
-        if self.modestate == 1:
-            clk = '''\ninit begin\n    forever #(T/2) clk = ~clk;\nend\n'''
-            rst = '''\ninit begin\n    #(T*2) rst_n = 1;\nend\n'''
-            self.tb_content += "%s%s" % (clk,rst)
+        if self.mode_option1.isChecked():
+            if self.clk_option.isChecked():
+                self.tb_content += '''\ninit begin\n    forever #(T/2) clk = ~clk;\nend\n'''
+            if self.rst_option.isChecked():
+                self.tb_content += '''\ninit begin\n    #(T*2) rst_n = 1;\nend\n'''
+            # self.tb_content += "%s%s" % (clk,rst)
 
         # print operation
-        if self.operatestate == 1 & self.modestate == 1:
-            self.tb_content += '''\ninit\nbegin\n\n    $finish;\nend\n'''
+        if self.operate_option.isChecked() & self.mode_option1.isChecked():
+            self.tb_content += '''\ninit begin\n\n    $finish;\nend\n'''
 
         # UUT
-        self.tb_content += "\n%s %su_%s (\n%s\n);" % (self.name, self.paraDef, self.name, self.portList)
+        self.tb_content += "\n%s %su_%s (\n%s\n);\n" % (self.name, self.paraDef, self.name, self.portList)
 
         # endmodule
-        if self.modestate == 1:
-            self.tb_content += "\n\nendmodule"
+        if self.mode_option1.isChecked():
+            self.tb_content += "\nendmodule"
 
         self.output_text.setPlainText(self.tb_content)
         self.result_label.setText("Gen success!")
