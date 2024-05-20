@@ -11,6 +11,7 @@ class TestbenchGenerator(QWidget):
         self.setWindowIcon(QIcon('images/verilog.png'))
         
         self.tb_content = ''
+        self.UUT_name = ''
         self.TFupdating = False
 
         # component
@@ -108,7 +109,7 @@ class TestbenchGenerator(QWidget):
         self.UUT_name_temple_input.setText("~")
         self.UUT_name_temple_input.textChanged.connect(self.RT_Gen)
         self.UUT_name_input = QLineEdit()
-        self.UUT_name_input.textChanged.connect(self.RT_Gen)
+        self.UUT_name_input.setReadOnly(True)
         UUT_name_layout = QHBoxLayout()
         UUT_name_layout.addWidget(self.UUT_name_label)
         UUT_name_layout.addWidget(self.UUT_name_temple_input)
@@ -262,7 +263,6 @@ class TestbenchGenerator(QWidget):
         time_unit_index = self.time_unit.currentIndex()
         time_unit_value = 10 ** ((4-time_unit_index) * 3)
         return time_unit_value / (frequency * frequency_unit_value)
-
 
 
     # testbench 生成逻辑
@@ -528,8 +528,8 @@ class TestbenchGenerator(QWidget):
             self.tb_content += '''\ninit begin\n\n    $finish;\nend\n'''
 
         # UUT
-        UUT_name = self.Gen_UUT_anme(self.name)
-        self.tb_content += "\n%s %s%s (\n%s\n);\n" % (self.name, self.paraDef, UUT_name, self.portList)
+        self.UUT_name = self.Gen_UUT_anme(self.name)
+        self.tb_content += "\n%s %s%s (\n%s\n);\n" % (self.name, self.paraDef, self.UUT_name, self.portList)
 
         # endmodule
         if self.mode_option1.isChecked():
