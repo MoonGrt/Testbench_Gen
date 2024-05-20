@@ -11,6 +11,7 @@ class TestbenchGenerator(QWidget):
         self.setWindowIcon(QIcon('images/verilog.png'))
         
         self.tb_content = ''
+        self.UUT_name = ''
         self.TFupdating = False
 
         # component
@@ -64,7 +65,7 @@ class TestbenchGenerator(QWidget):
         init_layout.addWidget(self.clk_option)
         init_layout.addWidget(self.rst_option)
         init_layout.addWidget(self.operate_option)
-        # TODO: clk rst自定义
+        # TODO: clk rst自定义, 且与内容链接
 
         self.time_label = QLabel('T:')
         self.time_input = QLineEdit('20')
@@ -102,6 +103,18 @@ class TestbenchGenerator(QWidget):
         UUT_layout.addWidget(self.UUT_CR_option)
         # TODO: clk rst自定义
 
+        self.UUT_name_label = QLabel('UUT_name:')
+        self.UUT_name_temple_input = QLineEdit()
+        self.UUT_name_temple_input.setFixedWidth(80)
+        self.UUT_name_temple_input.setText("~")
+        self.UUT_name_temple_input.textChanged.connect(self.RT_Gen)
+        self.UUT_name_input = QLineEdit()
+        self.UUT_name_input.setReadOnly(True)
+        UUT_name_layout = QHBoxLayout()
+        UUT_name_layout.addWidget(self.UUT_name_label)
+        UUT_name_layout.addWidget(self.UUT_name_temple_input)
+        UUT_name_layout.addWidget(self.UUT_name_input)
+
         self.gen_button = QPushButton('Gen')
         self.gen_button.setFixedWidth(80)
         self.gen_button.clicked.connect(self.Gen)
@@ -122,9 +135,10 @@ class TestbenchGenerator(QWidget):
         layoutV2 = QVBoxLayout()
         layoutV2.addWidget(self.mode_option)
         layoutV2.addWidget(self.align_option)
+        layoutV2.addLayout(UUT_layout)
+        layoutV2.addLayout(UUT_name_layout)
         layoutV2.addLayout(init_layout)
         layoutV2.addLayout(clk_layout)
-        layoutV2.addLayout(UUT_layout)
         layoutV2.addWidget(self.input_text)
 
         layoutH2 = QHBoxLayout()
@@ -199,6 +213,7 @@ class TestbenchGenerator(QWidget):
             except ValueError:
                 value = 0.0
             self.update_frequency_from_time(value)
+            self.RT_Gen()
 
     def frequency_input_changed(self, text):
         if not self.TFupdating:
@@ -207,16 +222,19 @@ class TestbenchGenerator(QWidget):
             except ValueError:
                 value = 0.0
             self.update_time_from_frequency(value)
+            self.RT_Gen()
 
     def time_unit_changed(self, index):
         if not self.TFupdating:
             frequency = float(self.frequency_input.text())
             self.update_time_from_frequency(frequency)
+            self.RT_Gen()
 
     def frequency_unit_changed(self, index):
         if not self.TFupdating:
             time = float(self.time_input.text())
             self.update_frequency_from_time(time)
+            self.RT_Gen()
 
     def update_frequency_from_time(self, time):
         self.TFupdating = True
@@ -249,7 +267,6 @@ class TestbenchGenerator(QWidget):
         time_unit_index = self.time_unit.currentIndex()
         time_unit_value = 10 ** ((4-time_unit_index) * 3)
         return time_unit_value / (frequency * frequency_unit_value)
-
 
 
     # testbench 生成逻辑
@@ -432,19 +449,25 @@ class TestbenchGenerator(QWidget):
                 paraDef = '#(\n' + ',\n'.join( ['    .'+ i[0].ljust(l1 + 1)
                             + '( ' + i[0].ljust(l1) + ' )' for i in p]) + ')\n'
 
-        if self.mode_option1.isChecked():
+        if self.mode_option1.isChecked() and (self.clk_option.isChecked() | self.rst_option.isChecked()):
+            T = int(float(self.time_input.text()))
             if self.align_option1.isChecked():
-                preDec = '\n'.join(['parameter %s = %s;\n' % ('T', '10')])
+                preDec = '\n'.join(['parameter %s = %s;\n' % ('T', T)])
             elif self.align_option2.isChecked():
-                preDec = '\n'.join(['parameter %s = %s;\n' % ('T'.ljust(l1+1), '10')])
+                preDec = '\n'.join(['parameter %s = %s;\n' % ('T'.ljust(l1+1), T)])
             elif self.align_option3.isChecked():
-                preDec = '\n'.join(['parameter %s = %s;\n' % ('T'.ljust(l1+1), '10'.ljust(l2))])
+                preDec = '\n'.join(['parameter %s = %s;\n' % ('T'.ljust(l1+1), str(T).ljust(l2))])
         else:
             preDec = ''
 
         paraDec = preDec + paraDec
         return paraDec, paraDef
 
+    def Gen_UUT_name(self, name):
+        UUT_name_temple = self.UUT_name_temple_input.text()
+        UUT_name_temple = UUT_name_temple.replace("~", name)
+        self.UUT_name_input.setText(UUT_name_temple)
+        return UUT_name_temple
 
     def Gen(self):
         inText = self.input_text.toPlainText()
@@ -453,7 +476,6 @@ class TestbenchGenerator(QWidget):
             self.result_label.setText(f"No input!")
             return
 
-        # try:
         # removed comment, task, function
         inText = self.delComment(inText)
         inText = self.delBlock(inText)
@@ -478,8 +500,6 @@ class TestbenchGenerator(QWidget):
         self.inout  = self.formatDeclare(self.inout, 'wire')
 
         self.GEN()
-        # except:
-        #     self.result_label.setText(f"Error!")
 
     """ generate testbench """
     def GEN(self):
@@ -513,7 +533,8 @@ class TestbenchGenerator(QWidget):
             self.tb_content += '''\ninit begin\n\n    $finish;\nend\n'''
 
         # UUT
-        self.tb_content += "\n%s %su_%s (\n%s\n);\n" % (self.name, self.paraDef, self.name, self.portList)
+        self.UUT_name = self.Gen_UUT_name(self.name)
+        self.tb_content += "\n%s %s%s (\n%s\n);\n" % (self.name, self.paraDef, self.UUT_name, self.portList)
 
         # endmodule
         if self.mode_option1.isChecked():
@@ -532,6 +553,5 @@ if __name__ == '__main__':
 
 
 
-# TODO:
-# UUT 名字 回车 i/o
+# TODO: layout
 

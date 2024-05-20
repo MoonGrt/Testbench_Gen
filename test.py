@@ -135,10 +135,10 @@ class TestbenchGenerator(QWidget):
         layoutV2 = QVBoxLayout()
         layoutV2.addWidget(self.mode_option)
         layoutV2.addWidget(self.align_option)
-        layoutV2.addLayout(init_layout)
-        layoutV2.addLayout(clk_layout)
         layoutV2.addLayout(UUT_layout)
         layoutV2.addLayout(UUT_name_layout)
+        layoutV2.addLayout(init_layout)
+        layoutV2.addLayout(clk_layout)
         layoutV2.addWidget(self.input_text)
 
         layoutH2 = QHBoxLayout()
@@ -213,6 +213,7 @@ class TestbenchGenerator(QWidget):
             except ValueError:
                 value = 0.0
             self.update_frequency_from_time(value)
+            self.RT_Gen()
 
     def frequency_input_changed(self, text):
         if not self.TFupdating:
@@ -221,16 +222,19 @@ class TestbenchGenerator(QWidget):
             except ValueError:
                 value = 0.0
             self.update_time_from_frequency(value)
+            self.RT_Gen()
 
     def time_unit_changed(self, index):
         if not self.TFupdating:
             frequency = float(self.frequency_input.text())
             self.update_time_from_frequency(frequency)
+            self.RT_Gen()
 
     def frequency_unit_changed(self, index):
         if not self.TFupdating:
             time = float(self.time_input.text())
             self.update_frequency_from_time(time)
+            self.RT_Gen()
 
     def update_frequency_from_time(self, time):
         self.TFupdating = True
@@ -445,20 +449,21 @@ class TestbenchGenerator(QWidget):
                 paraDef = '#(\n' + ',\n'.join( ['    .'+ i[0].ljust(l1 + 1)
                             + '( ' + i[0].ljust(l1) + ' )' for i in p]) + ')\n'
 
-        if self.mode_option1.isChecked():
+        if self.mode_option1.isChecked() and (self.clk_option.isChecked() | self.rst_option.isChecked()):
+            T = int(float(self.time_input.text()))
             if self.align_option1.isChecked():
-                preDec = '\n'.join(['parameter %s = %s;\n' % ('T', '10')])
+                preDec = '\n'.join(['parameter %s = %s;\n' % ('T', T)])
             elif self.align_option2.isChecked():
-                preDec = '\n'.join(['parameter %s = %s;\n' % ('T'.ljust(l1+1), '10')])
+                preDec = '\n'.join(['parameter %s = %s;\n' % ('T'.ljust(l1+1), T)])
             elif self.align_option3.isChecked():
-                preDec = '\n'.join(['parameter %s = %s;\n' % ('T'.ljust(l1+1), '10'.ljust(l2))])
+                preDec = '\n'.join(['parameter %s = %s;\n' % ('T'.ljust(l1+1), str(T).ljust(l2))])
         else:
             preDec = ''
 
         paraDec = preDec + paraDec
         return paraDec, paraDef
 
-    def Gen_UUT_anme(self, name):
+    def Gen_UUT_name(self, name):
         UUT_name_temple = self.UUT_name_temple_input.text()
         UUT_name_temple = UUT_name_temple.replace("~", name)
         self.UUT_name_input.setText(UUT_name_temple)
@@ -528,7 +533,7 @@ class TestbenchGenerator(QWidget):
             self.tb_content += '''\ninit begin\n\n    $finish;\nend\n'''
 
         # UUT
-        self.UUT_name = self.Gen_UUT_anme(self.name)
+        self.UUT_name = self.Gen_UUT_name(self.name)
         self.tb_content += "\n%s %s%s (\n%s\n);\n" % (self.name, self.paraDef, self.UUT_name, self.portList)
 
         # endmodule
