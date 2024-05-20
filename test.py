@@ -64,7 +64,7 @@ class TestbenchGenerator(QWidget):
         init_layout.addWidget(self.clk_option)
         init_layout.addWidget(self.rst_option)
         init_layout.addWidget(self.operate_option)
-        # TODO: clk rst自定义
+        # TODO: clk rst自定义, 且与内容链接
 
         self.time_label = QLabel('T:')
         self.time_input = QLineEdit('20')
@@ -102,6 +102,18 @@ class TestbenchGenerator(QWidget):
         UUT_layout.addWidget(self.UUT_CR_option)
         # TODO: clk rst自定义
 
+        self.UUT_name_label = QLabel('UUT_name:')
+        self.UUT_name_temple_input = QLineEdit()
+        self.UUT_name_temple_input.setFixedWidth(80)
+        self.UUT_name_temple_input.setText("~")
+        self.UUT_name_temple_input.textChanged.connect(self.RT_Gen)
+        self.UUT_name_input = QLineEdit()
+        self.UUT_name_input.textChanged.connect(self.RT_Gen)
+        UUT_name_layout = QHBoxLayout()
+        UUT_name_layout.addWidget(self.UUT_name_label)
+        UUT_name_layout.addWidget(self.UUT_name_temple_input)
+        UUT_name_layout.addWidget(self.UUT_name_input)
+
         self.gen_button = QPushButton('Gen')
         self.gen_button.setFixedWidth(80)
         self.gen_button.clicked.connect(self.Gen)
@@ -125,6 +137,7 @@ class TestbenchGenerator(QWidget):
         layoutV2.addLayout(init_layout)
         layoutV2.addLayout(clk_layout)
         layoutV2.addLayout(UUT_layout)
+        layoutV2.addLayout(UUT_name_layout)
         layoutV2.addWidget(self.input_text)
 
         layoutH2 = QHBoxLayout()
@@ -445,6 +458,11 @@ class TestbenchGenerator(QWidget):
         paraDec = preDec + paraDec
         return paraDec, paraDef
 
+    def Gen_UUT_anme(self, name):
+        UUT_name_temple = self.UUT_name_temple_input.text()
+        UUT_name_temple = UUT_name_temple.replace("~", name)
+        self.UUT_name_input.setText(UUT_name_temple)
+        return UUT_name_temple
 
     def Gen(self):
         inText = self.input_text.toPlainText()
@@ -453,7 +471,6 @@ class TestbenchGenerator(QWidget):
             self.result_label.setText(f"No input!")
             return
 
-        # try:
         # removed comment, task, function
         inText = self.delComment(inText)
         inText = self.delBlock(inText)
@@ -478,8 +495,6 @@ class TestbenchGenerator(QWidget):
         self.inout  = self.formatDeclare(self.inout, 'wire')
 
         self.GEN()
-        # except:
-        #     self.result_label.setText(f"Error!")
 
     """ generate testbench """
     def GEN(self):
@@ -513,7 +528,8 @@ class TestbenchGenerator(QWidget):
             self.tb_content += '''\ninit begin\n\n    $finish;\nend\n'''
 
         # UUT
-        self.tb_content += "\n%s %su_%s (\n%s\n);\n" % (self.name, self.paraDef, self.name, self.portList)
+        UUT_name = self.Gen_UUT_anme(self.name)
+        self.tb_content += "\n%s %s%s (\n%s\n);\n" % (self.name, self.paraDef, UUT_name, self.portList)
 
         # endmodule
         if self.mode_option1.isChecked():
@@ -532,6 +548,5 @@ if __name__ == '__main__':
 
 
 
-# TODO:
-# UUT 名字 回车 i/o
+# TODO: layout
 
