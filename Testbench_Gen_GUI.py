@@ -523,9 +523,9 @@ class TestbenchGenerator(QWidget):
         # print clock
         if self.mode_option1.isChecked():
             if self.clk_option.isChecked():
-                self.tb_content += '''\ninit begin\n    forever #(T/2) clk = ~clk;\nend\n'''
+                self.tb_content += '''\ninitial begin\n    forever #(T/2) clk = ~clk;\nend\n'''
             if self.rst_option.isChecked():
-                self.tb_content += '''\ninit begin\n    #(T*2) rst_n = 1;\nend\n'''
+                self.tb_content += '''\ninitial begin\n    #(T*2) rst_n = 1;\nend\n'''
             # self.tb_content += "%s%s" % (clk,rst)
 
         # print operation
