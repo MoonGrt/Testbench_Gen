@@ -8,7 +8,7 @@ class TestbenchGenerator(QWidget):
         super().__init__()
         self.setWindowTitle('Verilog Testbench Generator')
         self.resize(900, 800)
-        self.setWindowIcon(QIcon('images/verilog.png'))
+        self.setWindowIcon(QIcon('images/icons/verilog.png'))
         
         self.tb_content = ''
         self.UUT_name = ''
