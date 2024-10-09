@@ -102,7 +102,7 @@
 <!-- 许可证 -->
 ## 许可证
 
-根据 MIT 许可证分发。打开 [LICENSE.txt](LICENSE.txt) 查看更多内容。
+根据 MIT 许可证分发。打开 [LICENSE](LICENSE) 查看更多内容。
 <p align="right">(<a href="#top">top</a>)</p>
 
 
