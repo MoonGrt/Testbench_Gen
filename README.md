@@ -60,11 +60,12 @@
   ├─ LICENSE
   ├─ README.md
   ├─ README_cn.md
+  ├─ requirements.txt
+  ├─ run.bat
   ├─ Testbench_Gen.py
   ├─ Testbench_Gen_GUI.py
   └─ /images/
     └─ logo.png
-
 ```
 
 
@@ -109,7 +110,8 @@ Distributed under the MIT License. See `LICENSE` for more information.
 ## Contact
 
 MoonGrt - 1561145394@qq.com
-Project Link: [MoonGrt/](https://github.com/MoonGrt/)
+Project Link: [MoonGrt/Testbench_Gen](https://github.com/MoonGrt/Testbench_Gen)
+
 <p align="right">(<a href="#top">top</a>)</p>
 
 
