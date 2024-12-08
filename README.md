@@ -12,7 +12,7 @@
 <br />
 <div align="center">
     <a href="https://github.com/MoonGrt/Testbench_Gen">
-    <img src="images/logo.png" alt="Logo" width="80" height="80">
+    <img src="Document/images/logo.png" alt="Logo" width="80" height="80">
     </a>
 <h3 align="center">Testbench_Gen</h3>
     <p align="center">
@@ -64,7 +64,7 @@
   ├─ run.bat
   ├─ Testbench_Gen.py
   ├─ Testbench_Gen_GUI.py
-  └─ /images/
+  └─ /Document/images/
     └─ logo.png
 ```
 
@@ -74,10 +74,10 @@
 ## About The Project
 
 <p style=" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;">&quot;Testbench_Gen&quot; is a PyQt-based GUI tool designed to automatically generate testbenches and instance code for Verilog modules. By performing syntax parsing on the user-provided Verilog module, the tool extracts key information such as input/output ports and parameters, and generates the corresponding testbench code. </p>
-<p align="center" style=" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;"><img src="images/Testbench_Gen.png" height="400" /></p>
+<p align="center" style=" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;"><img src="Document/images/Testbench_Gen.png" height="400" /></p>
 <p style=" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;">Users can choose between two modes: &quot;Testbench&quot; mode for generating a full testbench, and &quot;Instance&quot; mode for quickly generating instance code. Additionally, the tool provides three instantiation modes: &quot;None&quot; for no instantiation code, &quot;Half&quot; for partial instantiation code, and &quot;Full&quot; for complete instantiation code.</p>
 <p style=" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;">To accommodate different user needs, Testbench_Gen allows users to customize the instance name (with the default name using '~' to represent the original module name). The tool also includes a built-in clock calculator that automatically generates clock signal code based on user-input clock frequency or period, simplifying clock-related development tasks.</p>
-<p align="center" style=" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;"><img src="images/Setting.png" /></p>
+<p align="center" style=" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;"><img src="Document/images/Setting.png" /></p>
 <p style="-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;"><br /></p></body></html>
 <p align="right">(<a href="#top">top</a>)</p>
 
@@ -132,7 +132,7 @@ Project Link: [MoonGrt/Testbench_Gen](https://github.com/MoonGrt/Testbench_Gen)
 
 
 
-<!-- MARKDOWN LINKS & IMAGES -->
+<!-- MARKDOWN LINKS & Document/images -->
 <!-- https://www.markdownguide.org/basic-syntax/#reference-style-links -->
 [contributors-shield]: https://img.shields.io/github/contributors/MoonGrt/Testbench_Gen.svg?style=for-the-badge
 [contributors-url]: https://github.com/MoonGrt/Testbench_Gen/graphs/contributors

@@ -12,7 +12,7 @@
 <br />
 <div align="center">
     <a href="https://github.com/MoonGrt/Testbench_Gen">
-    <img src="images/logo.png" alt="Logo" width="80" height="80">
+    <img src="Document/images/logo.png" alt="Logo" width="80" height="80">
     </a>
 <h3 align="center">Testbench_Gen</h3>
     <p align="center">
@@ -64,7 +64,7 @@
   ├─ run.bat
   ├─ Testbench_Gen.py
   ├─ Testbench_Gen_GUI.py
-  └─ /images/
+  └─ /Document/images/
     └─ logo.png
 ```
 
@@ -74,10 +74,10 @@
 ## 关于本项目
 
 <p style=" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;">“Testbench_Gen”是一款基于PyQt开发的GUI工具，旨在为Verilog模块自动生成测试平台（Testbench）和实例化代码。通过对用户输入的Verilog模块进行语法解析，软件可以提取模块的输入输出端口、参数（parameters）等关键信息，进而生成相应的testbench代码。</p>
-<p align="center" style=" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;"><img src="images/Testbench_Gen.png" height="400" /></p>
+<p align="center" style=" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;"><img src="Document/images/Testbench_Gen.png" height="400" /></p>
 <p style=" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;">用户可以选择两种模式：“Testbench”模式用于生成完整的测试平台；“Instance”模式用于快速生成模块的实例化代码。此外，软件提供三种实例化方式：“None”表示不添加任何实例化代码，“Half”表示生成部分实例化代码，“Full”表示生成完整的实例化代码。</p>
 <p style=" margin-top:12px; margin-bottom:12px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;">为了满足用户的不同需求，Testbench_Gen支持用户自定义模块实例化名称（默认名称使用‘~’替代模块原名）。软件内置时钟计算器，用户可以根据输入的时钟频率或时钟周期自动生成时钟信号代码，进一步简化时钟相关的开发工作。</p>
-<p align="center" style=" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;"><img src="images/Setting.png" /></p>
+<p align="center" style=" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;"><img src="Document/images/Setting.png" /></p>
 <p style="-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;"><br /></p></body></html>
 <p align="right">(<a href="#top">top</a>)</p>
 
@@ -135,7 +135,7 @@ Project Link: [MoonGrt/Testbench_Gen](https://github.com/MoonGrt/Testbench_Gen)
 
 
 
-<!-- MARKDOWN LINKS & IMAGES -->
+<!-- MARKDOWN LINKS & Document/images -->
 <!-- https://www.markdownguide.org/basic-syntax/#reference-style-links -->
 [contributors-shield]: https://img.shields.io/github/contributors/MoonGrt/Testbench_Gen.svg?style=for-the-badge
 [contributors-url]: https://github.com/MoonGrt/Testbench_Gen/graphs/contributors
